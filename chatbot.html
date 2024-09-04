@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f8;
+            color: #333;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            height: 60px;
+            position: relative;
+        }
+        .header .title {
+            flex: 1;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .menu-btn, .settings-btn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #333;
+            font-size: 20px;
+            transition: color 0.3s ease;
+        }
+        .menu-btn:hover, .settings-btn:hover {
+            color: #007bff;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: hidden;
+        }
+        .chat-box {
+            flex: 1;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+        }
+        .user-message {
+            align-self: flex-end;
+            text-align: right;
+        }
+        .bot-message {
+            align-self: flex-start;
+            text-align: left;
+        }
+        .message-text {
+            padding: 12px;
+            border-radius: 12px;
+            background-color: #e9ecef;
+            color: #000;
+            word-break: break-word;
+            max-width: fit-content;
+        }
+        .user-message .message-text {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 30px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+        .input-group:hover {
+            background-color: #f1f1f1;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid #ced4da;
+            border-radius: 30px;
+            background-color: #f8f9fa;
+            color: #495057;
+            margin-right: 10px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .input-group input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+        .input-group button {
+            border: none;
+            background: #007bff;
+            cursor: pointer;
+            color: #fff;
+            font-size: 18px;
+            padding: 8px 12px;
+            border-radius: 30px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+        #mic-button {
+            background-color: #28a745;
+        }
+        #send-button {
+            background-color: #007bff;
+        }
+        #mic-button:hover {
+            background-color: #218838;
+        }
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+        #send-button {
+            display: none;
+        }
+        .active #mic-button {
+            display: none;
+        }
+        .active #send-button {
+            display: block;
+        }
+        .menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #ffffff;
+            width: 250px;
+            height: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        .menu.open {
+            transform: translateX(0);
+        }
+        .menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .menu ul li {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: background-color 0.3s ease, padding-left 0.3s ease;
+            position: relative;
+        }
+        .menu ul li:hover {
+            background-color: #e9ecef;
+            padding-left: 25px;
+        }
+        .menu ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 5px;
+            height: 50%;
+            background-color: #007bff;
+            transform: translateY(-50%);
+            transition: background-color 0.3s ease;
+        }
+        .menu ul li:hover::before {
+            background-color: #0056b3;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+        }
+        .overlay.active {
+            display: block;
+        }
+        .typing-indicator {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 12px;
+            background-color: #f8f9fa;
+            color: #000;
+            display: flex;
+            align-items: center;
+        }
+        .typing-indicator::before {
+            content: "•";
+            margin-right: 5px;
+            animation: blink 1s infinite step-start;
+        }
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+        <div class="title">Pronos IA</div>
+        <button class="settings-btn" onclick="toggleRecentChats()"><i class="fas fa-comments"></i></button>
+    </div>
+    
+    <div class="container">
+        <div id="chat-messages" class="chat-box"></div>
+    </div>
+    
+    <div class="input-group">
+        <input type="text" id="user-input" placeholder="Écrivez un message..." />
+        <button id="mic-button" onclick="startDictation()"><i class="fas fa-microphone"></i></button>
+        <button id="send-button" onclick="sendMessage()"><i class="fas fa-arrow-right"></i></button>
+    </div>
+
+    <div class="menu" id="menu">
+        <ul>
+            <li onclick="navigateTo('index.html')"><i class="fas fa-home"></i> Accueil</li>
+            <li onclick="navigateTo('profil.html')"><i class="fas fa-user"></i> Profil</li>
+            <li onclick="startNewChat()"><i class="fas fa-pen"></i> Nouvelle Discussion</li>
+            <li onclick="toggleRecentChats()"><i class="fas fa-history"></i> Discussions Récentes</li>
+            <li onclick="navigateTo('a_propos.html')"><i class="fas fa-info-circle"></i> À propos</li>
+            <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Déconnexion</li>
+        </ul>
+    </div>
+
+    <div class="overlay" id="menu-overlay" onclick="toggleMenu()"></div>
+
+    <script>
+    function appendMessage(message, type) {
+        const chatMessages = document.getElementById('chat-messages');
+        const newMessage = document.createElement('div');
+        newMessage.className = 'message ' + (type === 'user' ? 'user-message' : 'bot-message');
+        const textDiv = document.createElement('div');
+        textDiv.className = 'message-text';
+        textDiv.innerHTML = message; // Utilise innerHTML pour rendre le HTML retourné par le serveur
+        newMessage.appendChild(textDiv);
+        chatMessages.appendChild(newMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        if (type === 'bot') {
+            typeWriterEffect(textDiv);
+        }
+    }
+
+    function showTypingIndicator() {
+        const chatMessages = document.getElementById('chat-messages');
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'message bot-message typing-indicator';
+        typingIndicator.id = 'typing-indicator';
+        chatMessages.appendChild(typingIndicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+
+    function typeWriterEffect(element) {
+        const text = element.textContent;
+        element.textContent = '';
+        let index = 0;
+        const speed = 50;
+
+        function type() {
+            if (index < text.length) {
+                element.textContent += text.charAt(index);
+                index++;
+                setTimeout(type, speed);
+            }
+        }
+
+        type();
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const message = input.value.trim();
+        if (message) {
+            appendMessage(message, 'user');
+            input.value = '';
+            updateButtonState();
+
+            showTypingIndicator();
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                });
+                const data = await response.json();
+                removeTypingIndicator();
+                appendMessage(data.reply, 'bot');
+            } catch (error) {
+                console.error('Erreur:', error);
+                removeTypingIndicator();
+                appendMessage('Désolé, une erreur est survenue.', 'bot');
+            }
+        }
+    }
+
+    function startDictation() {
+        if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'fr-FR';
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('user-input').value = transcript;
+                sendMessage();
+            };
+            recognition.start();
+        } else {
+            appendMessage('La reconnaissance vocale n\'est pas supportée par votre navigateur.', 'bot');
+        }
+    }
+
+    function updateButtonState() {
+        const input = document.getElementById('user-input').value.trim();
+        document.getElementById('send-button').style.display = input ? 'block' : 'none';
+        document.getElementById('mic-button').style.display = input ? 'none' : 'block';
+    }
+
+    document.getElementById('user-input').addEventListener('input', updateButtonState);
+
+    function toggleMenu() {
+        const menu = document.getElementById('menu');
+        const overlay = document.getElementById('menu-overlay');
+        menu.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
+
+    function toggleRecentChats() {
+        appendMessage('Affichage des discussions récentes non encore implémenté.', 'bot');
+    }
+
+    function startNewChat() {
+        document.getElementById('chat-messages').innerHTML = '';
+        appendMessage('Nouvelle discussion commencée.', 'bot');
+    }
+
+    function navigateTo(page) {
+        window.location.href = page;
+    }
+
+    function logout() {
+        window.location.href = 'authentification.html';
+    }
+</script>
+</body>
+</html>
