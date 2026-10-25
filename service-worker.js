@@ -1,7 +1,7 @@
 /* STARKY-ECO — service worker
    Met uniquement les IMAGES en cache. L'application (HTML, CSS, JS, API, polices)
    passe toujours par le réseau : aucune version hors-ligne. */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const IMG_CACHE = 'starky-eco-img-' + VERSION;
 const ICONS = [
   './icons/icon-192.png',
