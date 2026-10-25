@@ -1,1095 +1,543 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jeu des Gobelets</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            padding: 20px;
-            background-color: #f8f9fa;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        body.dark {
-            background-color: #121212;
-            color: #e0e0e0;
-        }
-        
-        /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .dark .header {
-            border-bottom-color: #333;
-        }
-        
-        .title {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .subtitle {
-            color: #666;
-            font-size: 16px;
-        }
-        
-        .dark .subtitle {
-            color: #aaa;
-        }
-        
-        /* Stats */
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .dark .stats {
-            background-color: #222;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        
-        .stat-box {
-            text-align: center;
-            flex: 1;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            color: #888;
-            margin-bottom: 5px;
-        }
-        
-        .dark .stat-label {
-            color: #777;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        /* Message */
-        .message {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .dark .message {
-            background-color: #222;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        
-        .message-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .message-subtitle {
-            color: #666;
-            font-size: 16px;
-        }
-        
-        .dark .message-subtitle {
-            color: #aaa;
-        }
-        
-        /* Game table */
-        .table {
-            margin-bottom: 20px;
-            padding: 30px 20px;
-            background-color: #5D5CDE;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .dark .table {
-            background-color: #4949aa;
-        }
-        
-        /* Table pattern overlay */
-        .table:before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%),
-                linear-gradient(45deg, rgba(0,0,0,0) 85%, rgba(0,0,0,0.1) 100%),
-                linear-gradient(-45deg, rgba(0,0,0,0) 85%, rgba(0,0,0,0.1) 100%),
-                linear-gradient(45deg, rgba(255,255,255,0) 85%, rgba(255,255,255,0.1) 100%),
-                linear-gradient(-45deg, rgba(255,255,255,0) 85%, rgba(255,255,255,0.1) 100%);
-        }
-        
-        /* Cups container */
-        .cups-container {
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-            max-width: 450px;
-            margin: 0 auto;
-        }
-        
-        /* Cup wrapper */
-        .cup-wrapper {
-            position: relative;
-            width: 90px;
-            height: 140px;
-            margin: 0 10px;
-            -webkit-transform-style: preserve-3d;
-            transform-style: preserve-3d;
-            z-index: 1;
-        }
-        
-        /* Cup */
-        .cup {
-            width: 90px;
-            height: 120px;
-            background-color: #e0e0e0;
-            border-radius: 45px 45px 0 0;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            cursor: pointer;
-            -webkit-transition: all 0.3s ease-out;
-            transition: all 0.3s ease-out;
-            -webkit-transform-origin: bottom center;
-            transform-origin: bottom center;
-            box-shadow: 
-                inset -5px 0 15px rgba(0,0,0,0.1),
-                inset 5px 0 15px rgba(0,0,0,0.05),
-                0 5px 15px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        
-        .dark .cup {
-            background-color: #555;
-            box-shadow: 
-                inset -5px 0 15px rgba(0,0,0,0.2),
-                inset 5px 0 15px rgba(0,0,0,0.1),
-                0 5px 15px rgba(0,0,0,0.3);
-        }
-        
-        /* Cup highlight */
-        .cup:after {
-            content: "";
-            position: absolute;
-            top: 5px;
-            left: 15px;
-            width: 15px;
-            height: 70px;
-            background: linear-gradient(to right, rgba(255,255,255,0.4), rgba(255,255,255,0));
-            border-radius: 50% 0 0 50%;
-            -webkit-transform: rotate(15deg);
-            transform: rotate(15deg);
-        }
-        
-        .dark .cup:after {
-            opacity: 0.3;
-        }
-        
-        /* Cup shadow */
-        .cup-shadow {
-            position: absolute;
-            bottom: 0;
-            left: 15px;
-            width: 60px;
-            height: 5px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 50%;
-            -webkit-filter: blur(2px);
-            filter: blur(2px);
-            z-index: -1;
-            -webkit-transition: all 0.3s ease-out;
-            transition: all 0.3s ease-out;
-        }
-        
-        .dark .cup-shadow {
-            background: rgba(0,0,0,0.3);
-        }
-        
-        /* Cup hover and active states */
-        .cup:hover {
-            -webkit-transform: translateY(-10px);
-            transform: translateY(-10px);
-        }
-        
-        .cup-wrapper:hover .cup-shadow {
-            -webkit-transform: scaleX(0.9);
-            transform: scaleX(0.9);
-            opacity: 0.7;
-        }
-        
-        .cup.active {
-            -webkit-transform: translateY(-20px);
-            transform: translateY(-20px);
-            background-color: #d0d0d0;
-        }
-        
-        .dark .cup.active {
-            background-color: #666;
-        }
-        
-        .cup-wrapper.active .cup-shadow {
-            -webkit-transform: scaleX(0.8);
-            transform: scaleX(0.8);
-            opacity: 0.5;
-        }
-        
-        .cup.up {
-            -webkit-transform: translateY(-70px) rotate(-5deg);
-            transform: translateY(-70px) rotate(-5deg);
-        }
-        
-        .cup-wrapper:nth-child(2) .cup.up {
-            -webkit-transform: translateY(-70px);
-            transform: translateY(-70px);
-        }
-        
-        .cup-wrapper:nth-child(3) .cup.up {
-            -webkit-transform: translateY(-70px) rotate(5deg);
-            transform: translateY(-70px) rotate(5deg);
-        }
-        
-        .cup-wrapper.up .cup-shadow {
-            -webkit-transform: scaleX(0.7);
-            transform: scaleX(0.7);
-            opacity: 0.3;
-        }
-        
-        /* Ball */
-        .ball {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #ff5252, #d32f2f);
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            margin-left: -15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            display: none;
-            z-index: -1;
-        }
-        
-        /* Ball shine */
-        .ball:after {
-            content: "";
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            width: 8px;
-            height: 8px;
-            background-color: rgba(255,255,255,0.6);
-            border-radius: 50%;
-        }
-        
-        /* Controls */
-        .controls {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        
-        .btn {
-            background-color: #5D5CDE;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            margin: 0 10px;
-            cursor: pointer;
-            -webkit-transition: all 0.2s ease;
-            transition: all 0.2s ease;
-            box-shadow: 0 3px 8px rgba(93, 92, 222, 0.3);
-            outline: none;
-        }
-        
-        .dark .btn {
-            box-shadow: 0 3px 8px rgba(93, 92, 222, 0.5);
-        }
-        
-        .btn:hover {
-            -webkit-transform: translateY(-2px);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 12px rgba(93, 92, 222, 0.4);
-            background-color: #4a49b8;
-        }
-        
-        .btn:active {
-            -webkit-transform: translateY(1px);
-            transform: translateY(1px);
-            box-shadow: 0 2px 5px rgba(93, 92, 222, 0.4);
-        }
-        
-        /* Instructions */
-        .instructions {
-            margin-bottom: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .dark .instructions {
-            background-color: #222;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        
-        .instructions-header {
-            padding: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #f5f5f5;
-        }
-        
-        .dark .instructions-header {
-            background-color: #333;
-        }
-        
-        .instructions-content {
-            padding: 15px;
-            display: none;
-        }
-        
-        .instructions-list {
-            list-style-position: inside;
-            padding-left: 15px;
-        }
-        
-        .instructions-list li {
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        
-        /* Animations */
-        @-webkit-keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {-webkit-transform: translateY(0);}
-            40% {-webkit-transform: translateY(-20px);}
-            60% {-webkit-transform: translateY(-10px);}
-        }
-        
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-            40% {transform: translateY(-20px);}
-            60% {transform: translateY(-10px);}
-        }
-        
-        @-webkit-keyframes pulse {
-            0% {-webkit-transform: scale(1);}
-            50% {-webkit-transform: scale(1.1);}
-            100% {-webkit-transform: scale(1);}
-        }
-        
-        @keyframes pulse {
-            0% {transform: scale(1);}
-            50% {transform: scale(1.1);}
-            100% {transform: scale(1);}
-        }
-        
-        @-webkit-keyframes shake {
-            0%, 100% {-webkit-transform: translateX(0);}
-            10%, 30%, 50%, 70%, 90% {-webkit-transform: translateX(-5px);}
-            20%, 40%, 60%, 80% {-webkit-transform: translateX(5px);}
-        }
-        
-        @keyframes shake {
-            0%, 100% {transform: translateX(0);}
-            10%, 30%, 50%, 70%, 90% {transform: translateX(-5px);}
-            20%, 40%, 60%, 80% {transform: translateX(5px);}
-        }
-        
-        .bounce {
-            -webkit-animation: bounce 1s;
-            animation: bounce 1s;
-        }
-        
-        .pulse {
-            -webkit-animation: pulse 0.5s;
-            animation: pulse 0.5s;
-        }
-        
-        .shake {
-            -webkit-animation: shake 0.5s;
-            animation: shake 0.5s;
-        }
-        
-        /* Success message */
-        .success-message {
-            color: #4CAF50;
-            font-weight: bold;
-        }
-        
-        .error-message {
-            color: #F44336;
-            font-weight: bold;
-        }
-        
-        .dark .success-message {
-            color: #81C784;
-        }
-        
-        .dark .error-message {
-            color: #E57373;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1 class="title">Jeu des Gobelets</h1>
-            <p class="subtitle">Suivez la bille sous les gobelets!</p>
-        </div>
-        
-        <!-- Stats -->
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-label">Score</div>
-                <div class="stat-value" id="score">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Niveau</div>
-                <div class="stat-value" id="level">1</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Victoires</div>
-                <div class="stat-value" id="wins">0</div>
-            </div>
-        </div>
-        
-        <!-- Message -->
-        <div class="message">
-            <div class="message-title" id="game-message">Prêt à jouer?</div>
-            <div class="message-subtitle" id="game-instruction">Appuyez sur "Démarrer" pour commencer</div>
-        </div>
-        
-        <!-- Game area -->
-        <div class="table">
-            <div class="cups-container">
-                <!-- Cup 1 (left) -->
-                <div class="cup-wrapper" data-position="0">
-                    <div class="cup" id="cup-0"></div>
-                    <div class="cup-shadow"></div>
-                    <div class="ball" id="ball-0"></div>
-                </div>
-                
-                <!-- Cup 2 (middle) -->
-                <div class="cup-wrapper" data-position="1">
-                    <div class="cup" id="cup-1"></div>
-                    <div class="cup-shadow"></div>
-                    <div class="ball" id="ball-1"></div>
-                </div>
-                
-                <!-- Cup 3 (right) -->
-                <div class="cup-wrapper" data-position="2">
-                    <div class="cup" id="cup-2"></div>
-                    <div class="cup-shadow"></div>
-                    <div class="ball" id="ball-2"></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Controls -->
-        <div class="controls">
-            <button id="start-button" class="btn">Démarrer</button>
-            <button id="replay-button" class="btn" style="display: none;">Rejouer</button>
-        </div>
-        
-        <!-- Instructions -->
-        <div class="instructions">
-            <div class="instructions-header" id="instructions-toggle">
-                <span>Comment jouer</span>
-                <span id="instructions-arrow">▼</span>
-            </div>
-            <div class="instructions-content" id="instructions-content">
-                <ol class="instructions-list">
-                    <li>Une bille rouge est placée sous l'un des trois gobelets.</li>
-                    <li>Les gobelets se soulèvent brièvement pour vous montrer où est la bille, puis redescendent.</li>
-                    <li>Les gobelets s'échangent rapidement de position. Suivez attentivement celui qui contient la bille.</li>
-                    <li>Après le mélange, les gobelets reprennent leurs positions d'origine (gauche, milieu, droite).</li>
-                    <li>Cliquez sur le gobelet où vous pensez que se trouve la bille.</li>
-                    <li>Si vous avez raison, vous marquez des points et passez au niveau suivant.</li>
-                </ol>
-            </div>
-        </div>
-    </div>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STARKY-ECO</title>
+<meta name="description" content="Une tontine moderne, sécurisée et transparente pour atteindre vos objectifs.">
+<meta name="theme-color" content="#0B4D2B">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="STARKY-ECO">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+:root{--page:#E8EFEA;--ink:#10231A;--muted:#4A5D53;--line:#D5E0DA;--green:#0F6B3A;--deep:#0B4D2B;--soft:#E6F3EB;--yellow:#F5B82E;--lime:#7ED957;--err:#B3261E;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#0A140F}}
+:root[data-theme="dark"]{--page:#0A140F}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--page);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);display:flex;justify-content:center}
+[hidden]{display:none!important}
+button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);width:100%;max-width:430px;overflow:hidden;overflow:clip}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:#fff;z-index:20}
+body[data-screen="home"]::before,body[data-screen="dashboard"]::before{background:#0B4D2B}
+@media (min-width:480px){.stage{margin:16px 0;border-radius:32px;box-shadow:0 12px 40px rgba(0,0,0,.18)}}
+.screen{grid-area:1/1;min-width:0;min-height:100dvh;position:relative;display:flex;flex-direction:column}
+@media (min-width:480px){.screen{min-height:min(844px,calc(100dvh - 32px))}}
 
-    <script>
-        // Détection du mode sombre
-        function checkDarkMode() {
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.body.classList.add('dark');
-                return true;
-            }
-            return false;
-        }
-        
-        // Initialisation du mode sombre
-        var isDarkMode = checkDarkMode();
-        
-        // Listener pour le changement de mode sombre (pour les navigateurs qui le supportent)
-        try {
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-                if (e.matches) {
-                    document.body.classList.add('dark');
-                    isDarkMode = true;
-                } else {
-                    document.body.classList.remove('dark');
-                    isDarkMode = false;
-                }
-            });
-        } catch (error) {
-            // Fallback pour iOS 12 qui ne supporte pas l'addEventListener sur matchMedia
-            console.log("Ce navigateur ne supporte pas le listener matchMedia");
-        }
-        
-        // Éléments du DOM
-        var startButton = document.getElementById('start-button');
-        var replayButton = document.getElementById('replay-button');
-        var cupWrappers = document.querySelectorAll('.cup-wrapper');
-        var cups = document.querySelectorAll('.cup');
-        var balls = document.querySelectorAll('.ball');
-        var scoreElement = document.getElementById('score');
-        var levelElement = document.getElementById('level');
-        var winsElement = document.getElementById('wins');
-        var gameMessage = document.getElementById('game-message');
-        var gameInstruction = document.getElementById('game-instruction');
-        var instructionsToggle = document.getElementById('instructions-toggle');
-        var instructionsContent = document.getElementById('instructions-content');
-        var instructionsArrow = document.getElementById('instructions-arrow');
-        
-        // Sons (créés à l'avance pour iOS)
-        var cupSound = new Audio();
-        var successSound = new Audio();
-        var errorSound = new Audio();
-        
-        // État du jeu
-        var gameState = {
-            started: false,
-            canSelect: false,
-            ballPosition: 1,
-            cupPositions: [0, 1, 2],
-            score: 0,
-            level: 1,
-            wins: 0,
-            difficulty: {
-                shuffleCount: 5,
-                shuffleSpeed: 600,
-                speedIncrease: 50,
-            }
-        };
-        
-        // Fonction pour jouer des sons (compatible iOS)
-        function playSound(type) {
-            try {
-                // Version simple pour éviter les problèmes sur iOS
-                var frequency, duration;
-                
-                if (type === 'cup') {
-                    frequency = 300;
-                    duration = 0.1;
-                } else if (type === 'success') {
-                    frequency = 600;
-                    duration = 0.3;
-                } else if (type === 'error') {
-                    frequency = 200;
-                    duration = 0.3;
-                }
-                
-                // Essayer de jouer le son avec l'API Web Audio
-                try {
-                    var AudioContext = window.AudioContext || window.webkitAudioContext;
-                    var audioCtx = new AudioContext();
-                    var oscillator = audioCtx.createOscillator();
-                    var gainNode = audioCtx.createGain();
-                    
-                    oscillator.type = 'sine';
-                    oscillator.frequency.value = frequency;
-                    gainNode.gain.value = 0.3;
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    
-                    oscillator.start();
-                    
-                    // Arrêter après la durée
-                    setTimeout(function() {
-                        oscillator.stop();
-                    }, duration * 1000);
-                } catch (e) {
-                    console.log("Web Audio API non supportée");
-                }
-            } catch (e) {
-                console.log("Erreur lors de la lecture du son");
-            }
-        }
-        
-        // Initialisation
-        function init() {
-            updateUI();
-            
-            // Gestionnaires d'événements
-            startButton.addEventListener('click', startGame);
-            replayButton.addEventListener('click', resetGame);
-            
-            // Clic sur les gobelets
-            cups.forEach(function(cup, index) {
-                cup.addEventListener('click', function() {
-                    if (gameState.canSelect) {
-                        selectCup(index);
-                    }
-                });
-            });
-            
-            // Toggle des instructions
-            instructionsToggle.addEventListener('click', function() {
-                if (instructionsContent.style.display === 'block') {
-                    instructionsContent.style.display = 'none';
-                    instructionsArrow.textContent = '▼';
-                } else {
-                    instructionsContent.style.display = 'block';
-                    instructionsArrow.textContent = '▲';
-                }
-            });
-        }
-        
-        // Fonction pour démarrer le jeu
-        function startGame() {
-            if (gameState.started) return;
-            
-            // Ajout d'un effet de pulse au bouton
-            startButton.classList.add('pulse');
-            
-            // Délai pour permettre à l'animation de se terminer
-            setTimeout(function() {
-                startButton.classList.remove('pulse');
-                
-                gameState.started = true;
-                gameState.canSelect = false;
-                startButton.style.display = 'none';
-                updateMessage('Regardez attentivement...', 'La bille va apparaître sous un gobelet');
-                
-                // Réinitialisation des positions
-                gameState.cupPositions = [0, 1, 2];
-                
-                // Placement aléatoire de la bille
-                resetBallPosition();
-                
-                // Animation initiale : lever les gobelets pour montrer la bille
-                setTimeout(function() {
-                    // Ajouter la classe up à tous les wrappers de gobelets
-                    cupWrappers.forEach(function(wrapper) {
-                        wrapper.classList.add('up');
-                        wrapper.querySelector('.cup').classList.add('up');
-                    });
-                    
-                    // Afficher la bille sous le bon gobelet
-                    balls[gameState.ballPosition].style.display = 'block';
-                    
-                    // Son de gobelet levé
-                    playSound('cup');
-                    
-                    // Après avoir montré la bille, abaisser les gobelets pour la cacher
-                    setTimeout(function() {
-                        // Retirer la classe up
-                        cupWrappers.forEach(function(wrapper) {
-                            wrapper.classList.remove('up');
-                            wrapper.querySelector('.cup').classList.remove('up');
-                        });
-                        
-                        // Son de gobelet abaissé
-                        playSound('cup');
-                        
-                        updateMessage('Gardez l\'œil sur le gobelet...', 'Préparez-vous pour le mélange');
-                        
-                        // Démarrer le mélange après l'abaissement des gobelets
-                        setTimeout(function() {
-                            updateMessage('Les gobelets se mélangent...', 'Suivez le gobelet avec la bille rouge');
-                            shuffleCups();
-                        }, 1000);
-                    }, 1500);
-                }, 1000);
-            }, 300);
-        }
-        
-        // Fonction pour réinitialiser le jeu
-        function resetGame() {
-            // Ajout d'un effet de pulse au bouton
-            replayButton.classList.add('pulse');
-            
-            // Délai pour permettre à l'animation de se terminer
-            setTimeout(function() {
-                replayButton.classList.remove('pulse');
-                
-                // Masquer le bouton rejouer et afficher le bouton démarrer
-                replayButton.style.display = 'none';
-                startButton.style.display = 'inline-block';
-                
-                // Réinitialiser les gobelets
-                cupWrappers.forEach(function(wrapper) {
-                    wrapper.classList.remove('active', 'up');
-                    wrapper.querySelector('.cup').classList.remove('active', 'up');
-                });
-                
-                // Masquer les billes
-                balls.forEach(function(ball) {
-                    ball.style.display = 'none';
-                });
-                
-                // Mettre à jour l'état du jeu
-                gameState.started = false;
-                gameState.canSelect = false;
-                
-                // Mettre à jour l'interface
-                updateMessage('Prêt à jouer?', 'Appuyez sur "Démarrer" pour commencer');
-            }, 300);
-        }
-        
-        // Fonction pour mélanger les gobelets
-        function shuffleCups() {
-            // Calcul de la vitesse en fonction du niveau
-            var currentSpeed = gameState.difficulty.shuffleSpeed - ((gameState.level - 1) * gameState.difficulty.speedIncrease);
-            if (currentSpeed < 200) currentSpeed = 200; // Vitesse minimale
-            
-            // Calcul du nombre d'échanges en fonction du niveau
-            var shuffleCount = gameState.difficulty.shuffleCount + Math.floor((gameState.level - 1) / 2);
-            if (shuffleCount > 15) shuffleCount = 15; // Nombre maximum d'échanges
-            
-            // Animer un petit tremblement avant de commencer
-            document.querySelector('.cups-container').classList.add('shake');
-            
-            // Retirer la classe shake après l'animation
-            setTimeout(function() {
-                document.querySelector('.cups-container').classList.remove('shake');
-                
-                // Séquence de mélange
-                performShuffleSequence(shuffleCount, currentSpeed);
-            }, 500);
-        }
-        
-        // Fonction pour exécuter une séquence de mélange
-        function performShuffleSequence(count, speed) {
-            // Créer une séquence d'échanges
-            var sequence = [];
-            
-            for (var i = 0; i < count; i++) {
-                // Sélection aléatoire de deux positions à échanger
-                var pos1 = Math.floor(Math.random() * 3);
-                var pos2 = pos1;
-                while (pos2 === pos1) {
-                    pos2 = Math.floor(Math.random() * 3);
-                }
-                
-                sequence.push([pos1, pos2]);
-            }
-            
-            // Exécuter la séquence d'échanges
-            executeShuffleSequence(sequence, 0, speed, function() {
-                // Repositionner les gobelets à leurs positions initiales
-                resetCupPositions(function() {
-                    // Mélange terminé
-                    gameState.canSelect = true;
-                    updateMessage('Choisissez un gobelet!', 'Où est la bille rouge?');
-                });
-            });
-        }
-        
-        // Fonction pour exécuter la séquence d'échanges
-        function executeShuffleSequence(sequence, index, speed, callback) {
-            if (index >= sequence.length) {
-                // Séquence terminée
-                callback();
-                return;
-            }
-            
-            // Effectuer l'échange actuel
-            var exchange = sequence[index];
-            var pos1 = exchange[0];
-            var pos2 = exchange[1];
-            
-            swapCupPositions(pos1, pos2, speed, function() {
-                // Passer à l'échange suivant
-                executeShuffleSequence(sequence, index + 1, speed, callback);
-            });
-        }
-        
-        // Fonction pour échanger les positions des gobelets
-        function swapCupPositions(pos1, pos2, speed, callback) {
-            // Échanger les valeurs dans le tableau de positions
-            var temp = gameState.cupPositions[pos1];
-            gameState.cupPositions[pos1] = gameState.cupPositions[pos2];
-            gameState.cupPositions[pos2] = temp;
-            
-            // Si la bille était sous l'un des gobelets échangés, mettre à jour sa position
-            if (gameState.ballPosition === pos1) {
-                gameState.ballPosition = pos2;
-            } else if (gameState.ballPosition === pos2) {
-                gameState.ballPosition = pos1;
-            }
-            
-            // Animation visuelle de l'échange
-            animateSwap(pos1, pos2, speed, callback);
-        }
-        
-        // Fonction pour animer l'échange de deux gobelets
-        function animateSwap(pos1, pos2, speed, callback) {
-            // Récupérer les éléments DOM correspondant aux positions
-            var cup1 = document.querySelector('.cup-wrapper[data-position="' + pos1 + '"]');
-            var cup2 = document.querySelector('.cup-wrapper[data-position="' + pos2 + '"]');
-            
-            // Récupérer les positions actuelles pour calculer la distance
-            var cup1Rect = cup1.getBoundingClientRect();
-            var cup2Rect = cup2.getBoundingClientRect();
-            var distance = cup2Rect.left - cup1Rect.left;
-            
-            // Jouer un son pour chaque échange
-            playSound('cup');
-            
-            // Configurer les transitions
-            cup1.style.webkitTransition = 'transform ' + (speed/1000) + 's ease-in-out';
-            cup1.style.transition = 'transform ' + (speed/1000) + 's ease-in-out';
-            cup2.style.webkitTransition = 'transform ' + (speed/1000) + 's ease-in-out';
-            cup2.style.transition = 'transform ' + (speed/1000) + 's ease-in-out';
-            
-            // Appliquer les transformations pour l'animation
-            cup1.style.webkitTransform = 'translateX(' + distance + 'px)';
-            cup1.style.transform = 'translateX(' + distance + 'px)';
-            cup2.style.webkitTransform = 'translateX(' + (-distance) + 'px)';
-            cup2.style.transform = 'translateX(' + (-distance) + 'px)';
-            
-            // Après l'animation, échanger les positions dans le DOM
-            setTimeout(function() {
-                // Réinitialiser les transitions et transformations
-                cup1.style.webkitTransition = '';
-                cup1.style.transition = '';
-                cup2.style.webkitTransition = '';
-                cup2.style.transition = '';
-                cup1.style.webkitTransform = '';
-                cup1.style.transform = '';
-                cup2.style.webkitTransform = '';
-                cup2.style.transform = '';
-                
-                // Échanger les attributs data-position
-                cup1.setAttribute('data-position', pos2);
-                cup2.setAttribute('data-position', pos1);
-                
-                // Rappel une fois l'échange terminé
-                if (callback) callback();
-            }, speed);
-        }
-        
-        // Fonction pour réinitialiser les positions des gobelets
-        function resetCupPositions(callback) {
-            // Créer un tableau mappant les positions actuelles aux positions d'origine
-            var reorderMap = [];
-            
-            for (var i = 0; i < 3; i++) {
-                var currentPos = gameState.cupPositions.indexOf(i);
-                reorderMap.push([currentPos, i]);
-            }
-            
-            // Réinitialiser l'ordre des positions
-            gameState.cupPositions = [0, 1, 2];
-            
-            // Animer le retour des gobelets à leurs positions d'origine
-            animateResetPositions(reorderMap, 0, 500, function() {
-                // Mettre à jour la position de la bille
-                for (var i = 0; i < 3; i++) {
-                    if (gameState.ballPosition === reorderMap[i][0]) {
-                        gameState.ballPosition = reorderMap[i][1];
-                        break;
-                    }
-                }
-                
-                if (callback) callback();
-            });
-        }
-        
-        // Fonction pour animer le repositionnement des gobelets
-        function animateResetPositions(reorderMap, index, speed, callback) {
-            if (index >= reorderMap.length) {
-                callback();
-                return;
-            }
-            
-            var fromPos = reorderMap[index][0];
-            var toPos = reorderMap[index][1];
-            
-            // Seulement animer si la position a changé
-            if (fromPos !== toPos) {
-                var cup = document.querySelector('.cup-wrapper[data-position="' + fromPos + '"]');
-                
-                // Obtenir les rectangles pour calculer la distance
-                var cupRect = cup.getBoundingClientRect();
-                var targetRect = document.querySelector('.cup-wrapper[data-position="' + toPos + '"]').getBoundingClientRect();
-                var distance = targetRect.left - cupRect.left;
-                
-                // Configurer la transition
-                cup.style.webkitTransition = 'transform ' + (speed/1000) + 's ease-in-out';
-                cup.style.transition = 'transform ' + (speed/1000) + 's ease-in-out';
-                
-                // Appliquer la transformation
-                cup.style.webkitTransform = 'translateX(' + distance + 'px)';
-                cup.style.transform = 'translateX(' + distance + 'px)';
-                
-                // Après l'animation
-                setTimeout(function() {
-                    // Réinitialiser les styles
-                    cup.style.webkitTransition = '';
-                    cup.style.transition = '';
-                    cup.style.webkitTransform = '';
-                    cup.style.transform = '';
-                    
-                    // Mettre à jour l'attribut de position
-                    cup.setAttribute('data-position', toPos);
-                    
-                    // Continuer avec le prochain gobelet
-                    animateResetPositions(reorderMap, index + 1, speed, callback);
-                }, speed);
-            } else {
-                // Passer au suivant si pas de changement
-                animateResetPositions(reorderMap, index + 1, speed, callback);
-            }
-        }
-        
-        // Fonction pour sélectionner un gobelet
-        function selectCup(cupIndex) {
-            if (!gameState.canSelect) return;
-            
-            gameState.canSelect = false;
-            
-            // Récupérer le wrapper du gobelet
-            var selectedWrapper = document.querySelector('.cup-wrapper[data-position="' + cupIndex + '"]');
-            
-            // Ajouter la classe active au gobelet
-            selectedWrapper.classList.add('active');
-            selectedWrapper.querySelector('.cup').classList.add('active');
-            
-            // Son de sélection
-            playSound('cup');
-            
-            // Vérifier si c'est le bon gobelet
-            var isCorrect = cupIndex === gameState.ballPosition;
-            
-            setTimeout(function() {
-                // Lever tous les gobelets pour révéler la bille
-                cupWrappers.forEach(function(wrapper) {
-                    wrapper.classList.add('up');
-                    wrapper.querySelector('.cup').classList.add('up');
-                });
-                
-                // Afficher la bille sous le bon gobelet
-                balls[gameState.ballPosition].style.display = 'block';
-                
-                // Son de gobelet levé
-                playSound('cup');
-                
-                // Mettre à jour l'état du jeu en fonction du résultat
-                if (isCorrect) {
-                    // Correct: points bonus et niveau suivant
-                    gameState.score += gameState.level * 100;
-                    gameState.wins++;
-                    gameState.level++;
-                    
-                    // Message de succès
-                    updateMessage('<span class="success-message">Bravo! Vous avez trouvé la bille!</span>', 
-                                 '+' + (gameState.level * 100) + ' points');
-                    
-                    // Animation de réussite
-                    balls[gameState.ballPosition].classList.add('bounce');
-                    
-                    // Son de succès
-                    playSound('success');
-                    
-                    // Afficher le bouton rejouer après un délai
-                    setTimeout(function() {
-                        replayButton.style.display = 'inline-block';
-                        replayButton.classList.add('bounce');
-                        
-                        // Retirer l'animation après
-                        setTimeout(function() {
-                            replayButton.classList.remove('bounce');
-                            balls[gameState.ballPosition].classList.remove('bounce');
-                        }, 1000);
-                    }, 1500);
-                } else {
-                    // Incorrect: pénalité de points
-                    gameState.score = Math.max(0, gameState.score - 50);
-                    
-                    // Message d'erreur
-                    updateMessage('<span class="error-message">Raté! Ce n\'était pas le bon gobelet.</span>', 
-                                 'La bille était sous le gobelet ' + (gameState.ballPosition + 1));
-                    
-                    // Son d'erreur
-                    playSound('error');
-                    
-                    // Afficher immédiatement le bouton rejouer
-                    setTimeout(function() {
-                        replayButton.style.display = 'inline-block';
-                    }, 500);
-                }
-                
-                // Mettre à jour l'interface
-                updateUI();
-            }, 500);
-        }
-        
-        // Fonction pour réinitialiser la position de la bille
-        function resetBallPosition() {
-            // Sélectionner aléatoirement une position pour la bille
-            gameState.ballPosition = Math.floor(Math.random() * 3);
-        }
-        
-        // Fonction pour mettre à jour l'interface
-        function updateUI() {
-            // Mettre à jour l'affichage du score et du niveau
-            scoreElement.textContent = gameState.score;
-            levelElement.textContent = gameState.level;
-            winsElement.textContent = gameState.wins;
-        }
-        
-        // Fonction pour mettre à jour les messages
-        function updateMessage(message, instruction) {
-            gameMessage.innerHTML = message;
-            gameInstruction.textContent = instruction;
-        }
-        
-        // Initialiser le jeu
-        init();
-    </script>
+/* transitions entre pages */
+@keyframes enterFwd{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
+@keyframes leaveFwd{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-48px)}}
+@keyframes enterBack{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:none}}
+@keyframes leaveBack{from{opacity:1;transform:none}to{opacity:0;transform:translateX(48px)}}
+.enter-fwd{animation:enterFwd .38s cubic-bezier(.2,.8,.2,1) both}
+.leave-fwd{animation:leaveFwd .3s ease-in both;pointer-events:none}
+.enter-back{animation:enterBack .38s cubic-bezier(.2,.8,.2,1) both}
+.leave-back{animation:leaveBack .3s ease-in both;pointer-events:none}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.rise{animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* boutons : base, appui, ondulation */
+.btn,.chip{position:relative;overflow:hidden;transition:transform .15s ease,box-shadow .2s ease,background-color .2s ease,opacity .2s ease}
+.btn:hover:not(:disabled),.chip:hover:not(:disabled){transform:translateY(-2px)}
+.btn:active:not(:disabled),.chip:active:not(:disabled){transform:scale(.95)}
+.btn:focus-visible,.chip:focus-visible,input:focus-visible+.box{outline:3px solid var(--lime);outline-offset:2px}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.55);transform:scale(0);animation:ripple .6s ease-out forwards;pointer-events:none}
+.chip .ripple,.btn.ghost .ripple{background:rgba(15,107,58,.25)}
+.btn.ghost .ripple{background:rgba(255,255,255,.35)}
+@keyframes ripple{to{transform:scale(4);opacity:0}}
+.btn{height:52px;border-radius:26px;font-size:16px;font-weight:800;border:0;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.yellow{background:var(--yellow);color:#0B3D22;box-shadow:0 6px 18px rgba(245,184,46,.35)}
+.btn.ghost{background:var(--deep);color:#fff;border:2px solid #fff;font-weight:700}
+.btn.green{background:var(--green);color:#fff;box-shadow:0 6px 18px rgba(15,107,58,.3)}
+.btn:disabled{background:#DCE5E0;color:#5B6B63;box-shadow:none;cursor:not-allowed}
+/* style "bouton retour" partagé */
+.chip{border:0;background:var(--soft);color:var(--green);display:flex;align-items:center;justify-content:center}
+.chip:hover:not(:disabled){background:#D5EBDD}
+.back{width:44px;height:44px;border-radius:50%}
+
+/* Accueil */
+#home{background:linear-gradient(180deg,#0B4D2B 0%,#0F6B3A 70%,#138A47 100%);color:#fff;align-items:center;padding:72px 28px 56px;overflow:hidden}
+#home .logo{animation:float 4s ease-in-out infinite}
+#home h1{margin:16px 0 0;font-size:38px;font-weight:800;letter-spacing:-.5px}
+#home h1 span{color:var(--yellow)}
+.tag{margin:8px 0 0;font-size:16px;font-weight:600}
+.pitch{margin:32px 0 0;font-size:16px;line-height:1.5;text-align:center;max-width:300px;color:#E3F3E9}
+.feats{display:flex;gap:36px;margin-top:32px}
+.feat{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.feat i{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center}
+.wave{position:absolute;left:0;bottom:0;width:100%;height:120px}
+.cta{margin-top:auto;width:100%;display:flex;flex-direction:column;gap:14px;position:relative;z-index:1;padding-top:32px}
+
+/* Pages avec en-tête */
+.page{background:#fff}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:#fff;display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.bar h1{flex:1;margin:0;font-size:19px;font-weight:800}
+.step{font-size:12px;font-weight:700;color:var(--green);background:var(--soft);border-radius:12px;padding:5px 10px}
+.pbody{padding:20px 24px 28px;display:flex;flex-direction:column;flex:1}
+.sub{margin:0 0 20px;font-size:14px;line-height:1.5;color:var(--muted)}
+.fields{display:flex;flex-direction:column;gap:12px}
+.field{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:14px;padding:9px 8px 9px 16px;transition:border-color .2s,box-shadow .2s}
+.field:focus-within{border-color:var(--green);box-shadow:0 0 0 4px rgba(15,107,58,.12)}
+.field.err{border-color:var(--err);animation:shake .35s}
+.fi{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.fi label{font-size:12px;color:var(--muted)}
+.fi input{border:0;outline:0;padding:0;font:600 15px 'Plus Jakarta Sans',sans-serif;color:var(--ink);background:none;width:100%}
+.fi input::placeholder{color:#7A8B82;font-weight:400}
+.prow{display:flex;align-items:center;gap:10px}
+.pre{font:700 15px 'Plus Jakarta Sans',sans-serif;color:var(--ink);padding-right:10px;border-right:1.5px solid var(--line);user-select:none}
+.prow input{flex:1;min-width:0}
+.eye{width:40px;height:40px;border-radius:50%;flex:none}
+.msg{margin:4px 4px 0;font-size:12px;color:var(--err);min-height:0}
+.msg:empty{display:none}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+.card{margin-top:0;border:1.5px dashed var(--line);border-radius:16px;padding:12px;margin-bottom:12px;transition:border-color .3s,background-color .3s}
+.card.done{border:1.5px solid var(--green);background:#F1F8F4}
+.head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.head strong{flex:1;font-size:14px}
+.head small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:1px}
+.badge{width:26px;height:26px;border-radius:50%;border:2px solid #8FA298;display:flex;align-items:center;justify-content:center;transition:background-color .25s,border-color .25s}
+.badge svg{opacity:0;transform:scale(.3);transition:all .3s cubic-bezier(.3,1.6,.5,1)}
+.badge.on{background:var(--green);border-color:var(--green)}
+.badge.on svg{opacity:1;transform:none}
+@keyframes pop{50%{transform:scale(1.3)}}
+.badge.on{animation:pop .4s}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.slot{border-radius:14px;padding:8px;flex-direction:column;gap:6px;text-align:center;font-size:12px;color:var(--muted);border:1.5px solid transparent}
+.slot b{display:block;font-size:13px;color:var(--ink)}
+.thumb{width:100%;height:68px;border-radius:10px;background:#fff;border:1.5px dashed #9DB0A5;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--green)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.slot.done{border-color:var(--green)}
+.slot.done .thumb{border-style:solid;border-color:var(--green)}
+.slot:disabled{opacity:.6;cursor:not-allowed}
+.slot.selfie{flex-direction:row;text-align:left;gap:12px;width:100%;padding:8px}
+.slot.selfie .thumb{width:68px;border-radius:50%;flex:none}
+.slot.selfie span.t{flex:1}
+
+.terms{display:flex;gap:12px;align-items:flex-start;margin-top:18px;font-size:13px;line-height:1.45;color:var(--muted);cursor:pointer}
+.terms input{position:absolute;opacity:0;width:24px;height:24px;margin:0}
+.box{width:24px;height:24px;border-radius:8px;border:2px solid #8FA298;flex:none;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.box svg{opacity:0;transform:scale(.3);transition:all .25s cubic-bezier(.3,1.6,.5,1)}
+.terms input:checked+.box{background:var(--green);border-color:var(--green)}
+.terms input:checked+.box svg{opacity:1;transform:none}
+.terms u{color:var(--green);font-weight:600}
+.pbody .btn{margin-top:auto}
+.hint{margin:22px 0 10px;text-align:center;font-size:12.5px;color:var(--muted);min-height:18px}
+.login{margin:14px 0 0;text-align:center;font-size:14px;color:var(--muted)}
+.login a{color:var(--green);font-weight:700}
+.spin{width:20px;height:20px;border-radius:50%;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+
+/* Tableau de bord */
+.dash{background:#F3F7F4}
+.dh{background:linear-gradient(180deg,#0B4D2B,#0F6B3A);color:#fff;padding:24px 20px 28px;border-radius:0 0 28px 28px;display:flex;align-items:center;gap:12px}
+.av{width:48px;height:48px;border-radius:50%;background:var(--yellow);color:#0B3D22;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;flex:none}
+.who{flex:1;min-width:0}
+.who b{display:block;font-size:17px}
+.who small{font-size:13px;color:#E3F3E9}
+.chip.bell{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;position:relative}
+.chip.bell:hover:not(:disabled){background:rgba(255,255,255,.26)}
+.dot{position:absolute;top:9px;right:10px;width:11px;height:11px;border-radius:50%;background:var(--yellow);border:2px solid #0F6B3A}
+.dbody{padding:16px 20px 24px;display:flex;flex-direction:column;gap:16px}
+.alert{display:flex;gap:12px;background:#FFF1D0;color:#5E3A00;border:1.5px solid #F0C36A;border-radius:16px;padding:14px;font-size:13px;line-height:1.45;animation:rise .5s .1s both}
+.alert b{display:block;font-size:14px}
+.alert svg{flex:none;margin-top:1px}
+.empty{background:#fff;border-radius:20px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;box-shadow:0 4px 16px rgba(16,35,26,.06);animation:rise .5s .2s both}
+.empty .ic{width:72px;height:72px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.empty h2{margin:0;font-size:18px}
+.empty p{margin:0 0 8px;font-size:14px;line-height:1.5;color:var(--muted)}
+.btn.locked{background:#DCE5E0;color:#4A5D53;cursor:not-allowed;box-shadow:none}
+.btn.locked:hover,.btn.locked:active{transform:none}
+.empty small{font-size:12.5px;color:var(--muted)}
+.tabs{position:sticky;bottom:env(safe-area-inset-bottom,0px);margin-top:auto;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 4px 10px}
+.tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#5F6F66;padding:4px 0;min-height:48px}
+.tab.on{color:var(--green)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);background:#10231A;color:#fff;font-size:13px;line-height:1.4;padding:12px 16px;border-radius:14px;max-width:min(360px,calc(100vw - 32px));text-align:center;opacity:0;pointer-events:none;transition:all .3s;z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Connexion + notifications */
+.forgot{align-self:flex-end;margin:10px 4px 0;background:none;border:0;color:var(--green);font-weight:700;font-size:13px;padding:8px 4px}
+.fbar{display:flex;gap:8px;overflow-x:auto;max-width:100%;padding:14px 20px 4px}
+.fchip{height:38px;padding:0 16px;border-radius:19px;font-size:13px;font-weight:700;flex:none}
+.fchip.on{background:var(--green);color:#fff}
+.fchip.on:hover:not(:disabled){background:var(--green)}
+.nlist{list-style:none;margin:0;padding:8px 20px 28px;display:flex;flex-direction:column;gap:10px}
+.nitem{display:flex;gap:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#fff;animation:rise .4s both}
+.nitem.unread{background:#F1F8F4;border-color:#B9D9C6}
+.nic{width:40px;height:40px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center}
+.nic.amber{background:#FFF1D0;color:#7A4B00}.nic.greenc{background:var(--soft);color:var(--green)}
+.nt{flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px;line-height:1.45;color:var(--muted)}
+.nt b{display:block;font-size:14px;color:var(--ink)}
+.nt time{display:block;margin-top:4px;font-size:11.5px;color:#5F6F66}
+.udot{width:10px;height:10px;border-radius:50%;background:var(--green);margin-top:5px;flex:none}
+.nitem:not(.unread) .udot{display:none}
+.nempty{text-align:center;color:var(--muted);font-size:14px;padding:40px 20px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body data-screen="home">
+<div class="stage">
+
+<main class="screen" id="home">
+  <svg class="logo" width="104" height="96" viewBox="0 0 104 96" aria-hidden="true">
+    <circle cx="52" cy="14" r="10" fill="#F5B82E"/><circle cx="24" cy="30" r="8" fill="#7ED957"/><circle cx="80" cy="30" r="8" fill="#7ED957"/>
+    <path d="M52 92C24 82 14 62 18 44c16 2 28 10 34 22 6-12 18-20 34-22 4 18-6 38-34 48z" fill="#7ED957"/>
+    <path d="M52 88V58" stroke="#0B4D2B" stroke-width="4" stroke-linecap="round"/>
+  </svg>
+  <h1 class="rise" style="animation-delay:.1s">STARKY<span>-ECO</span></h1>
+  <p class="tag rise" style="animation-delay:.2s">Ensemble, on va plus loin !</p>
+  <p class="pitch rise" style="animation-delay:.3s">Une tontine moderne, sécurisée et transparente pour atteindre vos objectifs.</p>
+  <div class="feats">
+    <div class="feat rise" style="animation-delay:.4s"><i><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7ED957" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></i>Simple</div>
+    <div class="feat rise" style="animation-delay:.5s"><i><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7ED957" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></i>Sécurisée</div>
+    <div class="feat rise" style="animation-delay:.6s"><i><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7ED957" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg></i>Solidaire</div>
+  </div>
+  <svg class="wave" viewBox="0 0 390 120" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 70C70 30 140 100 220 70S340 30 390 60V120H0z" fill="#F5B82E"/>
+    <path d="M0 92C80 56 150 116 240 90S350 64 390 84V120H0z" fill="#7ED957"/>
+  </svg>
+  <div class="cta rise" style="animation-delay:.7s">
+    <button class="btn yellow" id="goSignup">Créer un compte</button>
+    <button class="btn ghost" id="goLogin">Se connecter</button>
+  </div>
+</main>
+
+<main class="screen page" id="signup" hidden>
+  <header class="bar">
+    <button class="chip back" id="goHome" aria-label="Retour"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+    <h1>Créer un compte</h1><span class="step">Étape 1/2</span>
+  </header>
+  <div class="pbody">
+    <p class="sub">Rejoignez la communauté STARKY-ECO et commencez à épargner ensemble.</p>
+    <div class="fields">
+      <div><div class="field" id="f-name"><div class="fi"><label for="name">Nom et prénom</label><input id="name" type="text" placeholder="Ex. Kouamé Aka" autocomplete="name"></div></div><p class="msg" id="m-name"></p></div>
+      <div><div class="field" id="f-phone"><div class="fi"><label for="phone">Numéro de téléphone</label><div class="prow"><span class="pre">+225</span><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="0712345678" autocomplete="tel-national"></div></div></div><p class="msg" id="m-phone"></p></div>
+      <div><div class="field" id="f-pw"><div class="fi"><label for="pw">Mot de passe</label><input id="pw" type="password" placeholder="8 caractères minimum" autocomplete="new-password"></div>
+        <button type="button" class="chip eye" data-target="pw" aria-label="Afficher le mot de passe" aria-pressed="false"></button></div><p class="msg" id="m-pw"></p></div>
+      <div><div class="field" id="f-pw2"><div class="fi"><label for="pw2">Confirmer le mot de passe</label><input id="pw2" type="password" placeholder="Retapez le mot de passe" autocomplete="new-password"></div>
+        <button type="button" class="chip eye" data-target="pw2" aria-label="Afficher la confirmation du mot de passe" aria-pressed="false"></button></div><p class="msg" id="m-pw2"></p></div>
+    </div>
+    <p class="hint" id="hint1" aria-live="polite"></p>
+    <button class="btn green" id="next" disabled>Continuer</button>
+    <p class="login">Déjà un compte ? <a href="#" id="toHome">Se connecter</a></p>
+  </div>
+</main>
+
+<main class="screen page" id="identity" hidden>
+  <header class="bar">
+    <button class="chip back" id="backForm" aria-label="Retour"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+    <h1>Vérification d’identité</h1><span class="step">Étape 2/2</span>
+  </header>
+  <div class="pbody">
+    <p class="sub">Prenez une photo claire de votre CNI, puis un selfie pour sécuriser votre compte.</p>
+    <div class="card" id="cardCni">
+      <div class="head">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F6B3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 16c.6-1.4 1.6-2 3-2s2.4.6 3 2"/></svg>
+        <strong>CNI<small>Photo en direct, recto puis verso</small></strong>
+        <span class="badge" id="bCni"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>
+      </div>
+      <div class="slots">
+        <button type="button" class="chip slot" id="slotRecto"><span class="thumb" id="thRecto"></span><span><b>Recto</b><span id="tRecto">Prendre en photo</span></span></button>
+        <button type="button" class="chip slot" id="slotVerso" disabled><span class="thumb" id="thVerso"></span><span><b>Verso</b><span id="tVerso">Après le recto</span></span></button>
+      </div>
+      <input type="file" id="fRecto" accept="image/*" capture="environment" hidden>
+      <input type="file" id="fVerso" accept="image/*" capture="environment" hidden>
+    </div>
+    <div class="card" id="cardSelfie">
+      <div class="head">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F6B3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>
+        <strong>Selfie<small>Visage + CNI en main</small></strong>
+        <span class="badge" id="bSelfie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>
+      </div>
+      <button type="button" class="chip slot selfie" id="slotSelfie"><span class="thumb" id="thSelfie"></span><span class="t"><b>Prendre mon selfie</b><span id="tSelfie">Caméra avant</span></span></button>
+      <input type="file" id="fSelfie" accept="image/*" capture="user" hidden>
+    </div>
+    <label class="terms"><input type="checkbox" id="terms"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span>J’accepte les <u>conditions d’utilisation</u> et la <u>politique de confidentialité</u>.</span></label>
+    <p class="hint" id="hint2" aria-live="polite"></p>
+    <button class="btn green" id="submit" disabled>S’inscrire</button>
+  </div>
+</main>
+
+<main class="screen dash" id="dashboard" hidden>
+  <header class="dh">
+    <span class="av" id="avatar">K</span>
+    <div class="who"><b id="hello">Bonjour !</b><small>Bienvenue sur STARKY-ECO.</small></div>
+    <button class="chip bell" id="bell" aria-label="Notifications (1 non lue)" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15z"/><path d="M10 21h4"/></svg><span class="dot"></span></button>
+  </header>
+  <div class="dbody">
+    <div class="alert" role="status">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A4B00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>
+      <div><b>Compte non vérifié</b>Vos documents sont en cours de vérification. Certaines fonctions sont limitées pour le moment.</div>
+    </div>
+    <section class="empty">
+      <span class="ic"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0F6B3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5M16 14.6c2.6 0 4.5 1.6 5 4.4"/></svg></span>
+      <h2>Aucune tontine pour le moment</h2>
+      <p>Rejoignez un groupe pour commencer à épargner ensemble.</p>
+      <button class="btn green locked" id="joinBtn" aria-disabled="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Rejoindre un groupe</button>
+      <small>Disponible une fois la vérification terminée.</small>
+    </section>
+  </div>
+  <nav class="tabs" aria-label="Navigation">
+    <button class="tab on" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></svg>Accueil</button>
+    <button class="tab" data-lock><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/></svg>Mon groupe</button>
+    <button class="tab" data-lock><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12.5h.01M3 10h18"/></svg>Cagnotte</button>
+    <button class="tab" data-lock><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5h.01M12 12h.01M12 19h.01"/></svg>Plus</button>
+  </nav>
+</main>
+
+<main class="screen page" id="login" hidden>
+  <header class="bar"><button class="chip back" id="backLogin" aria-label="Retour"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button><h1>Se connecter</h1></header>
+  <div class="pbody">
+    <p class="sub">Content de vous revoir ! Connectez-vous pour retrouver votre espace STARKY-ECO.</p>
+    <div class="fields">
+      <div><div class="field" id="f-lphone"><div class="fi"><label for="lphone">Numéro de téléphone</label><div class="prow"><span class="pre">+225</span><input id="lphone" type="tel" inputmode="numeric" maxlength="10" placeholder="0712345678" autocomplete="tel-national"></div></div></div><p class="msg" id="m-lphone"></p></div>
+      <div><div class="field" id="f-lpw"><div class="fi"><label for="lpw">Mot de passe</label><input id="lpw" type="password" placeholder="Votre mot de passe" autocomplete="current-password"></div><button type="button" class="chip eye" data-target="lpw" aria-label="Afficher le mot de passe" aria-pressed="false"></button></div><p class="msg" id="m-lpw"></p></div>
+    </div>
+    <button type="button" class="forgot" id="forgot">Mot de passe oublié ?</button>
+    <p class="hint" id="hintL" aria-live="polite"></p>
+    <button class="btn green" id="loginBtn" disabled>Se connecter</button>
+    <p class="login">Pas encore de compte ? <a href="#" id="toSignup">Créer un compte</a></p>
+  </div>
+</main>
+
+<main class="screen page" id="notifs" hidden>
+  <header class="bar"><button class="chip back" id="backNotifs" aria-label="Retour"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button><h1>Notifications</h1></header>
+  <div class="fbar" role="group" aria-label="Filtrer les notifications">
+    <button class="chip fchip on" data-f="all" aria-pressed="true">Toutes</button>
+    <button class="chip fchip" data-f="cot" aria-pressed="false">Cotisations</button>
+    <button class="chip fchip" data-f="grp" aria-pressed="false">Groupe</button>
+    <button class="chip fchip" data-f="sys" aria-pressed="false">Système</button>
+  </div>
+  <ul class="nlist" id="nlist">
+    <li class="nitem unread" data-cat="sys"><span class="nic amber"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg></span><div class="nt"><b>Compte non vérifié</b>Vos documents sont en cours de vérification. Certaines fonctions sont limitées pour le moment.<time>À l’instant</time></div><span class="udot"></span></li>
+    <li class="nitem" data-cat="sys"><span class="nic greenc"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12l3 3 5-6"/></svg></span><div class="nt"><b>Documents reçus</b>Nous avons bien reçu votre CNI et votre selfie. Notre équipe les examine.<time>À l’instant</time></div><span class="udot"></span></li>
+    <li class="nitem" data-cat="grp"><span class="nic greenc"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/></svg></span><div class="nt"><b>Bienvenue sur STARKY-ECO</b>Vous pourrez rejoindre un groupe dès que votre compte sera vérifié.<time>À l’instant</time></div><span class="udot"></span></li>
+  </ul>
+  <p class="nempty" id="nempty" hidden>Aucune notification dans cette catégorie.</p>
+</main>
+
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  /* numéros : +225 fixe, 10 chiffres exactement, sans espaces */
+  ['phone','lphone'].forEach(function(id){
+    var el=$(id);
+    el.addEventListener('input',function(){
+      var d=el.value.replace(/\D/g,'');
+      if(d.length>10&&d.indexOf('225')===0) d=d.slice(3);
+      el.value=d.slice(0,10);
+    });
+  });
+  var CAM='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+  var LOCK='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+  var EYE='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYEOFF='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0112 5c6.5 0 10 7 10 7a17 17 0 01-3.2 4M6.5 6.6C3.6 8.4 2 12 2 12s3.5 7 10 7a9.8 9.8 0 004.4-1M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+
+  /* ---------- navigation avec transition ---------- */
+  var current='home', busy=false;
+  function show(to,dir){
+    if(to===current||busy) return;
+    busy=true;
+    var a=$(current), b=$(to);
+    document.body.dataset.screen=to;
+    b.hidden=false; b.classList.add('enter-'+dir);
+    a.classList.add('leave-'+dir);
+    window.scrollTo(0,0);
+    setTimeout(function(){
+      a.hidden=true; a.classList.remove('leave-'+dir);
+      b.classList.remove('enter-'+dir);
+      current=to; busy=false;
+    },380);
+  }
+  $('goSignup').addEventListener('click',function(){show('signup','fwd')});
+  $('goHome').addEventListener('click',function(){show('home','back')});
+  $('next').addEventListener('click',function(){show('identity','fwd')});
+  $('backForm').addEventListener('click',function(){show('signup','back')});
+  $('toHome').addEventListener('click',function(e){e.preventDefault();show('login','fwd')});
+  $('goLogin').addEventListener('click',function(){show('login','fwd')});
+  $('backLogin').addEventListener('click',function(){show('home','back')});
+  $('toSignup').addEventListener('click',function(e){e.preventDefault();show('signup','fwd')});
+
+  /* ---------- ondulation au clic ---------- */
+  document.addEventListener('pointerdown',function(e){
+    var t=e.target.closest('.btn,.chip');
+    if(!t||t.disabled) return;
+    var r=t.getBoundingClientRect(), s=Math.max(r.width,r.height), el=document.createElement('span');
+    el.className='ripple';
+    el.style.cssText='width:'+s/2+'px;height:'+s/2+'px;left:'+(e.clientX-r.left-s/4)+'px;top:'+(e.clientY-r.top-s/4)+'px';
+    t.appendChild(el);
+    setTimeout(function(){el.remove()},650);
+  });
+
+  /* ---------- voir / masquer le mot de passe ---------- */
+  document.querySelectorAll('.eye').forEach(function(b){
+    b.innerHTML=EYE;
+    b.addEventListener('click',function(){
+      var inp=$(b.dataset.target), shown=inp.type==='text';
+      inp.type=shown?'password':'text';
+      b.innerHTML=shown?EYE:EYEOFF;
+      b.setAttribute('aria-pressed',String(!shown));
+    });
+  });
+
+  /* ---------- photos : CNI recto -> verso, selfie ---------- */
+  var st={recto:false,verso:false,selfie:false};
+  $('thRecto').innerHTML=CAM; $('thVerso').innerHTML=LOCK; $('thSelfie').innerHTML=CAM;
+  var urls={};
+  function shot(key,fileId,slotId,thId,txtId,doneTxt){
+    $(slotId).addEventListener('click',function(){$(fileId).click()});
+    $(fileId).addEventListener('change',function(){
+      var f=this.files&&this.files[0]; if(!f) return;
+      if(urls[key]) URL.revokeObjectURL(urls[key]);
+      urls[key]=URL.createObjectURL(f);
+      $(thId).innerHTML='<img alt="Aperçu" src="'+urls[key]+'">';
+      $(txtId).textContent=doneTxt;
+      $(slotId).classList.add('done');
+      st[key]=true; refresh();
+    });
+  }
+  shot('recto','fRecto','slotRecto','thRecto','tRecto','Pris · Reprendre');
+  shot('verso','fVerso','slotVerso','thVerso','tVerso','Pris · Reprendre');
+  shot('selfie','fSelfie','slotSelfie','thSelfie','tSelfie','Pris · Reprendre');
+
+  /* ---------- validation ---------- */
+  var touched={};
+  var rules={
+    name:function(v){return v.trim().length>=3&&/[A-Za-zÀ-ÿ]/.test(v)?'':'Entrez votre nom et prénom.'},
+    phone:function(v){return /^\d{10}$/.test(v)?'':'Le numéro doit contenir exactement 10 chiffres.'},
+    pw:function(v){return v.length>=8?'':'8 caractères minimum.'},
+    pw2:function(v){return v&&v===$('pw').value?'':'Les mots de passe ne correspondent pas.'}
+  };
+  function check(k,showErr){
+    var m=rules[k]($(k).value);
+    if(showErr){$('f-'+k).classList.toggle('err',!!m);$('m-'+k).textContent=m;}
+    return !m;
+  }
+  Object.keys(rules).forEach(function(k){
+    $(k).addEventListener('blur',function(){touched[k]=true;check(k,true);refresh()});
+    $(k).addEventListener('input',function(){
+      if(touched[k]) check(k,true);
+      if(k==='pw'&&touched.pw2) check('pw2',true);
+      refresh();
+    });
+  });
+  $('terms').addEventListener('change',refresh);
+
+  function refresh(){
+    /* verso déverrouillé après le recto */
+    var v=$('slotVerso');
+    if(st.recto&&v.disabled){v.disabled=false;$('tVerso').textContent='Prendre en photo';if(!st.verso)$('thVerso').innerHTML=CAM;}
+    var cniOk=st.recto&&st.verso;
+    $('bCni').classList.toggle('on',cniOk); $('cardCni').classList.toggle('done',cniOk);
+    $('bSelfie').classList.toggle('on',st.selfie); $('cardSelfie').classList.toggle('done',st.selfie);
+    /* étape 1 : informations */
+    var m1=[];
+    Object.keys(rules).forEach(function(k){if(!check(k,false)) m1.push({name:'nom',phone:'téléphone',pw:'mot de passe',pw2:'confirmation'}[k]);});
+    $('next').disabled=m1.length>0;
+    $('hint1').textContent=m1.length?'À compléter : '+m1.join(', ')+'.':'';
+    /* étape 2 : identité */
+    var m2=[];
+    if(!st.recto) m2.push('CNI recto'); else if(!st.verso) m2.push('CNI verso');
+    if(!st.selfie) m2.push('selfie');
+    if(!$('terms').checked) m2.push('conditions');
+    $('submit').disabled=m2.length>0;
+    $('hint2').textContent=m2.length?'À compléter : '+m2.join(', ')+'.':'Tout est prêt, vous pouvez vous inscrire.';
+  }
+  refresh();
+
+  /* ---------- envoi ---------- */
+  $('submit').addEventListener('click',function(){
+    var btn=this; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+    setTimeout(function(){
+      var first=$('name').value.trim().split(/\s+/)[0]||'';
+      $('hello').textContent='Bonjour, '+first+' !';
+      $('avatar').textContent=first.charAt(0).toUpperCase()||'S';
+      btn.textContent='S’inscrire';
+      show('dashboard','fwd');
+    },1000);
+  });
+
+  /* ---------- tableau de bord ---------- */
+  var tt;
+  function toast(msg){
+    var t=$('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(tt); tt=setTimeout(function(){t.classList.remove('show')},2600);
+  }
+  $('joinBtn').addEventListener('click',function(){toast('Disponible une fois votre compte vérifié.')});
+  document.querySelectorAll('[data-lock]').forEach(function(t){t.addEventListener('click',function(){toast('Disponible une fois votre compte vérifié.')})});
+  /* ---------- notifications ---------- */
+  $('bell').addEventListener('click',function(){
+    var d=this.querySelector('.dot'); if(d) d.remove();
+    this.setAttribute('aria-label','Notifications');
+    show('notifs','fwd');
+  });
+  $('backNotifs').addEventListener('click',function(){
+    document.querySelectorAll('.nitem.unread').forEach(function(n){n.classList.remove('unread')});
+    show('dashboard','back');
+  });
+  document.querySelectorAll('.fchip').forEach(function(c){
+    c.addEventListener('click',function(){
+      document.querySelectorAll('.fchip').forEach(function(x){x.classList.toggle('on',x===c);x.setAttribute('aria-pressed',String(x===c));});
+      var n=0;
+      document.querySelectorAll('.nitem').forEach(function(it){
+        var ok=c.dataset.f==='all'||it.dataset.cat===c.dataset.f; it.hidden=!ok; if(ok) n++;
+      });
+      $('nempty').hidden=n>0;
+    });
+  });
+
+  /* ---------- connexion ---------- */
+  var lt={};
+  var lrules={
+    lphone:function(v){return /^\d{10}$/.test(v)?'':'Le numéro doit contenir exactement 10 chiffres.'},
+    lpw:function(v){return v.length>=8?'':'8 caractères minimum.'}
+  };
+  function lcheck(k,showErr){
+    var m=lrules[k]($(k).value);
+    if(showErr){$('f-'+k).classList.toggle('err',!!m);$('m-'+k).textContent=m;}
+    return !m;
+  }
+  function lrefresh(){
+    var ok=lcheck('lphone',false)&&lcheck('lpw',false);
+    $('loginBtn').disabled=!ok;
+    $('hintL').textContent=ok?'':'Entrez votre téléphone et votre mot de passe.';
+  }
+  Object.keys(lrules).forEach(function(k){
+    $(k).addEventListener('blur',function(){lt[k]=true;lcheck(k,true);lrefresh()});
+    $(k).addEventListener('input',function(){if(lt[k]) lcheck(k,true);lrefresh()});
+  });
+  lrefresh();
+  $('forgot').addEventListener('click',function(){toast('La réinitialisation sera bientôt disponible.')});
+  $('loginBtn').addEventListener('click',function(){
+    var btn=this; btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+    setTimeout(function(){
+      var first=$('name').value.trim().split(/\s+/)[0]||'';
+      $('hello').textContent=first?'Bonjour, '+first+' !':'Bonjour !';
+      $('avatar').textContent=first?first.charAt(0).toUpperCase():'S';
+      btn.textContent='Se connecter'; lrefresh();
+      show('dashboard','fwd');
+    },900);
+  });
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('service-worker.js').catch(function(e){console.warn('SW:',e)});
+  });
+}
+</script>
 </body>
 </html>
