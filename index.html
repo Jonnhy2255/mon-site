@@ -34,11 +34,6 @@ html{background:#fff}
 html:has(body[data-screen="home"]){background:#7ED957}
 html:has(body[data-screen="dashboard"]){background:#F3F7F4}
 }
-@supports (-webkit-touch-callout:none){
-html{height:-webkit-fill-available}
-body{min-height:-webkit-fill-available}
-@media (max-width:479px){.stage{min-height:-webkit-fill-available}}
-}
 
 button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .stage{display:grid;grid-template-columns:minmax(0,1fr);width:100%;max-width:430px}
@@ -198,6 +193,11 @@ button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparen
 .nitem:not(.unread) .udot{display:none}
 .nempty{text-align:center;color:var(--muted);font-size:14px;padding:40px 20px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* PWA iOS : au lancement dvh=768 alors que l'écran fait 812 (lvh) -> on se cale sur lvh */
+@media (display-mode:standalone) and (max-width:479px){
+html,body{min-height:100vh;min-height:100lvh}
+.screen{min-height:100vh;min-height:100lvh}
+}
 </style>
 <style>
 #dbg{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:9999;max-width:414px;margin:0 auto;background:rgba(10,20,15,.92);color:#E3F3E9;border-radius:14px;font:12px/1.35 ui-monospace,Menlo,monospace;box-shadow:0 6px 24px rgba(0,0,0,.4)}
@@ -567,6 +567,15 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('service-worker.js').catch(function(e){console.warn('SW:',e)});
   });
 }
+</script>
+<script>
+(function(){
+  var sa=(window.matchMedia&&matchMedia('(display-mode:standalone)').matches)||navigator.standalone;
+  if(!sa)return;
+  function nudge(){if(innerHeight<screen.height&&document.documentElement.scrollHeight>innerHeight){scrollTo(0,1);requestAnimationFrame(function(){scrollTo(0,0)})}}
+  addEventListener('load',function(){nudge();setTimeout(nudge,150);setTimeout(nudge,500)});
+  addEventListener('pageshow',nudge);
+})();
 </script>
 <div id="dbg"><div class="dh2"><b id="dbgT">Dimensions</b><button type="button" id="dbgCopy">Copier</button><button type="button" id="dbgMin">–</button></div><textarea id="dbgTxt" readonly spellcheck="false"></textarea></div>
 <script>
