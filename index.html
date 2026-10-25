@@ -27,6 +27,19 @@ img{-webkit-user-drag:none;user-drag:none}
 
 body{margin:0;background:var(--page);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);display:flex;justify-content:center}
 [hidden]{display:none!important}
+/* iOS (PWA) : 100dvh est trop court au lancement -> le fond doit remplir tout l'écran */
+html{background:var(--page)}
+@media (max-width:479px){
+html{background:#fff}
+html:has(body[data-screen="home"]){background:#7ED957}
+html:has(body[data-screen="dashboard"]){background:#F3F7F4}
+}
+@supports (-webkit-touch-callout:none){
+html{height:-webkit-fill-available}
+body{min-height:-webkit-fill-available}
+@media (max-width:479px){.stage{min-height:-webkit-fill-available}}
+}
+
 button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .stage{display:grid;grid-template-columns:minmax(0,1fr);width:100%;max-width:430px}
 @media (min-width:480px){.stage{margin:16px 0;border-radius:32px;box-shadow:0 12px 40px rgba(0,0,0,.18);overflow:clip}}
